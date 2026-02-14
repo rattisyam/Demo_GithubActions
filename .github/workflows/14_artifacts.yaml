@@ -2,12 +2,13 @@ name: 14 - Working with Artifacts
 
 on:
   workflow_dispatch:
+
 jobs:
   test-build:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working_directory: 14_artifacts/react-app
+        working-directory: 14_artifacts/react-app
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
