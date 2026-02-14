@@ -18,7 +18,7 @@ jobs:
       - name: Download cached dependencies
         id: cache
         uses: actions/cache@v3
-        keys: |
+        key: |
           deps-node-modules-${{ hashFiles('14_artifacts/react-app/package-lock.json') }}
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
