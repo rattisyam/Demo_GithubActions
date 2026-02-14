@@ -5,9 +5,9 @@ on:
 
 env:
   #build-artifact-key: app-{{ github.run_id }}-{{ github.run_number }}
-  build-artifact-key: app-{{ github.sha }}
+  build-artifact-key: app-${{ github.sha }}
   #test-coverage-key: test-results-{{ github.run_id }}-{{ github.run_number }}
-  test-coverage-key: test-coverage-{{ github.sha }}
+  test-coverage-key: test-coverage-${{ github.sha }}
 
 jobs:
   test-build:
