@@ -53,8 +53,14 @@ jobs:
             color: red
           - shape: circle
             opacity: 50
+          - color: green
+            shape: circle
+            size: medium
+
         exclude:
-          - opacity: 100
+          - color: green
+            shape: circle
+          #- opacity: 100
             
 
          
