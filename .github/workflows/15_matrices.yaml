@@ -16,9 +16,9 @@ jobs:
         include:
           - node-version: 18.x
             os: ubuntu-latest
-          - node-version: 22.x
-            os: ubuntu-latest
-            tags: "experimental"
+          #- node-version: 22.x
+          #  os: ubuntu-latest
+          #  tags: "experimental"
 
       fail-fast: false
 
@@ -27,19 +27,19 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Fail if experimental
-        if: matrix.tags == 'experimental'
-        run: exit 1
+      #- name: Fail if experimental
+      #  if: matrix.tags == 'experimental'
+       # run: exit 1
 
       - name: Perform some tests
         run: |
           echo "Running tests on OS ${{ matrix.os }} and NodeJS ${{ matrix.node-version }}"
-          sleep 10
+          #sleep 10
       - name: Upload test results
         run: echo "Uploading test results"
   
   include-example:
-    name: test job
+    name: ${{ matrix.color }}-${{ matrix.shape }}-${{ matrix.size }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -49,3 +49,7 @@ jobs:
         include:
           - color: blue
             shape: triangle
+    steps:
+      - name: Dummy step
+        run: echo "Testing with color ${{ matrix.color }}, shape ${{ matrix.shape }}, and size ${{ matrix.size }}"
+         
