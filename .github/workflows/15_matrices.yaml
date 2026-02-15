@@ -37,3 +37,15 @@ jobs:
           sleep 10
       - name: Upload test results
         run: echo "Uploading test results"
+  
+  include-example:
+    name: test job
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        color: [red, green]
+        shape: [circle, square]
+        size: [small, large]
+        include:
+          - color: blue
+            shape: triangle
