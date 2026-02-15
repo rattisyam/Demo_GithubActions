@@ -51,6 +51,8 @@ jobs:
             shape: triangle
           - opacity: 100
             color: red
+          - opacity: 50
+            color: circle
             
     steps:
       - name: Dummy step
