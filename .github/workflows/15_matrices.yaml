@@ -53,6 +53,10 @@ jobs:
             color: red
           - shape: circle
             opacity: 50
+        exclude:
+          - opacity: 100
+            
+
          
             
     steps:
