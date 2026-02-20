@@ -1,0 +1,43 @@
+
+got to repo--> settings--> actions--> runners--addd created VM as runner.
+
+mkdir actions-runner && cd actions-runner
+curl -o actions-runner-linux-x64-2.331.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.331.0/actions-runner-linux-x64-2.331.0.tar.gz
+echo "5fcc01bd546ba5c3f1291c2803658ebd3cedb3836489eda3be357d41bfcf28a7  actions-runner-linux-x64-2.331.0.tar.gz" | shasum -a 256 -c
+
+tar xzf ./actions-runner-linux-x64-2.331.0.tar.gz
+
+
+
+
+# Runner # Create the runner and start the configuration experience
+
+./config.sh --url https://github.com/rattisyam/Demo_GithubActions --token AGDDWTD7OTLWOTJRH5TEHI3JS65HW
+
+
+Enter the name of the runner group to add this runner to: [press Enter for Default]
+
+Enter the name of runner: [press Enter for GHAAGENT1]
+
+This runner will have the following labels: 'self-hosted', 'Linux', 'X64'
+Enter any additional labels (ex. label-1,label-2): [press Enter to skip] self-agent1
+
+√ Runner successfully added
+
+# Runner settings
+
+Enter name of work folder: [press Enter for _work] /home/githuba/
+
+√ Settings Saved.
+
+run the runner:
+./run.sh
+
+githuba@GHAAGENT1:~/actions-runner$ ./run.sh
+
+√ Connected to GitHub
+
+Current runner version: '2.331.0'
+2026-02-20 00:43:37Z: Listening for Jobs
+
+
