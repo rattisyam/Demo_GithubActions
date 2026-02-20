@@ -1,0 +1,66 @@
+name: Working with Selfhosted Runners
+
+on:
+  workflow_dispatch:
+
+env:
+  build-artifact-key: app-{{ github.run_id }}-{{ github.run_number }}
+  test-coverage-key: test-results-{{ github.run_id }}-{{ github.run_number }}
+  
+
+jobs:
+  test-build:
+    runs-on: [self-hosted, self-agent1]
+    defaults:
+      run:
+        working-directory: 14-artifacts/react-app
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Show the Runner Info
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Work dir: $RUNNER_WORKSPACE"
+          pwd
+          ls -lart
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      - name: Download cached dependencies
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: 14-artifacts/react-app/node_modules
+          key: deps-node-modules-${{ hashFiles('14-artifacts/react-app/package-lock.json') }}
+            
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Unit tests
+        run: npm run test -- --coverage
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.test-coverage-key }}
+          path: 14-artifacts/react-app/coverage
+      - name: Build Code
+        run: npm run build
+      - name: Upload build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.build-artifact-key }}
+          path: 14-artifacts/react-app/build
+  deploy:
+    runs-on: [self-hosted, self-agent1]
+    needs: test-build
+    steps:
+      - name: Download build files
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.build-artifact-key }}
+          path: build
+      - name: Show folder structure
+        run: ls -R 
+

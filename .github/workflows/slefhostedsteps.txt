@@ -41,3 +41,10 @@ Current runner version: '2.331.0'
 2026-02-20 00:43:37Z: Listening for Jobs
 
 
+#to run react js application on node do the below steps on agent.
+    1  sudo apt update
+    2  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    3  sudo apt install -y nodejs
+    4  sudo apt install -y build-essential
+    5  node -v
+    6  npm -v
