@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 env:
-  build-artifact-key: app-{{ github.run_id }}-{{ github.run_number }}
-  test-coverage-key: test-results-{{ github.run_id }}-{{ github.run_number }}
+  build-artifact-key: app-${{ github.run_id }}-${{ github.run_number }}
+  test-coverage-key: test-results-${{ github.run_id }}-${{ github.run_number }}
   
 
 jobs:

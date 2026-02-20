@@ -48,3 +48,21 @@ Current runner version: '2.331.0'
     4  sudo apt install -y build-essential
     5  node -v
     6  npm -v
+
+inside runner:
+githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions$ ls -lrt
+total 8
+drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:04 14-artifacts
+drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:05 build
+githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions$
+githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions$ ls -lart
+total 24
+drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:03 ..
+drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:04 .github
+drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:04 14-artifacts
+drwxrwxr-x 8 githuba githuba 4096 Feb 20 01:04 .git
+drwxrwxr-x 6 githuba githuba 4096 Feb 20 01:05 .
+drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:05 build
+githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions$ cd .github/
+githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions/.github$ ls -lart
+
