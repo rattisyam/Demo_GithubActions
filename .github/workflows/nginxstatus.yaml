@@ -30,7 +30,7 @@ jobs:
       - name: Upload nginx status as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nginx-status
+          name: pre-nginx-status
           path: ./nginx_status.txt
       
   download-nginx-status:
@@ -40,7 +40,7 @@ jobs:
       - name: Download nginx status artifact
         uses: actions/download-artifact@v4
         with:
-          name: nginx-status
+          name: pre-nginx-status
       - name: Display the downloaded nginx status
         run: |
           STATUS=$(cat ./nginx_status.txt)
@@ -57,13 +57,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Run Ansible Playbook
-        run: |
-          ansible-playbook -i inventory.ini postcheck_nginx_status.yaml
+      #- name: Run Ansible Playbook
+      #  run: |
+      #    ansible-playbook -i inventory.ini postcheck_nginx_status.yaml
 
       - name: Fetch the content from target to runner
         run: |
            scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/post_nginx_status.txt ./post_nginx_status.txt
+
+
       - name: Display the fetched nginx status
         run: cat ./post_nginx_status.txt
       
@@ -72,14 +74,20 @@ jobs:
         with:
           name: post-nginx-status
           path: ./post_nginx_status.txt
-      - name: compare pre and post upgrade nginx.txt files
+
+  compare-status:
+    runs-on: [self-hosted, self-agent1]
+    needs: [nginx-status-ansible, post-upgradecheck, download-nginx-status]
+    steps:
+      - name: download precheck nginx status artifact
         uses: actions/download-artifact@v4
         with:
-          name: nginx-status
-      - name: compare pre and post upgrade nginx.txt files 
+          name: pre-nginx-status
+      - name: Download post upgrade nginx.txt files 
         uses: actions/download-artifact@v4
         with:
           name: post-nginx-status
+          
       - name: Compare nginx status before and after upgrade
         run: |
           echo "Comparing nginx status before and after upgrade..."
