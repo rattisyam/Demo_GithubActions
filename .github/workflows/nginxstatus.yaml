@@ -3,9 +3,12 @@ run-name: Check Nginx status on target machine
 on:
   workflow_dispatch:
 
+work
+
 jobs:
   nginx-status-ansible:
     runs-on: [self-hosted, self-agent1]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
