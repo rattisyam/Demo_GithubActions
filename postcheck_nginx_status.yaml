@@ -1,0 +1,19 @@
+---
+- name: check nginx status on target machine
+  hosts: managednode1
+  gather_facts: false
+  tasks:
+    - name: check nginx service status after some action
+      ansible.builtin.shell: systemctl is-active nginx
+      register: post_nginx_status
+      ignore_errors: true
+
+    - name: print nginx status
+      debug:
+        var: post_nginx_status.stdout
+        verbosity: 1
+    - name: Save nginx post status to file
+      ansible.builtin.copy:
+        content: "{{ post_nginx_status.stdout }}\n"
+        dest: /tmp/post_nginx_status.txt
+    
