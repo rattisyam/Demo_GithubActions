@@ -52,6 +52,7 @@ jobs:
           fi
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
+    needs: [download-nginx-status, nginx-status-ansible]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
