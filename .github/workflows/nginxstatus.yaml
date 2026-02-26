@@ -33,4 +33,23 @@ jobs:
           name: nginx-status
           path: ./nginx_status.txt
       
+  download-nginx-status:
+    runs-on: [self-hosted, self-agent1]
+    needs: nginx-status-ansible
+    steps:
+      - name: Download nginx status artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nginx-status
+      - name: Display the downloaded nginx status
+        run: |
+          STATUS=$(cat ./nginx_status.txt)
+          echo "Nginx status: $STATUS"
+          if [ "$STATUS" = "active" ]; then
+            echo "Nginx is running"
+          else
+            echo "Nginx is not running"
+          fi
+          
+
           
