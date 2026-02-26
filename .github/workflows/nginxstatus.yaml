@@ -1,4 +1,5 @@
 name: Check Nginx status with Ansible
+run-name: Check Nginx status on target machine
 on:
   workflow_dispatch:
 
