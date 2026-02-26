@@ -11,7 +11,9 @@
     - name: print nginx status
       debug:
         var: nginx_status.stdout
+        verbosity: 1
     - name: Save nginx status to file
       ansible.builtin.copy:
-        content: "{{ nginx_status.stdout }}"
+        content: "{{ nginx_status.stdout }}\n"
         dest: /tmp/nginx_status.txt
+    
