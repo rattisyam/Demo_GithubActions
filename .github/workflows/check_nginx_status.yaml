@@ -1,0 +1,17 @@
+---
+- name: check nginx status on target machine
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: check nginx service status
+      ansible.builtin.shell: systemctl is-active nginx
+      register: nginx_status
+      ignore_errors: true
+
+    - name: print nginx status
+      debug:
+        var: nginx_status.stdout
+    - name: Save nginx status to file
+      ansible.builtin.copy:
+        content: "{{ nginx_status.stdout }}"
+        dest: /tmp/nginx_status.txt

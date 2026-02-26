@@ -1,0 +1,23 @@
+name: Check Nginx status with Ansible
+on:
+  workflow_dispatch:
+
+jobs:
+  nginx-status-ansible:
+    runs-on: [self-hosted, self-agent1]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Show the Runner Info
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Work dir: $RUNNER_WORKSPACE"
+          pwd
+          ls -lart
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i inventory.ini check_nginx_status.yaml
+      
+          
