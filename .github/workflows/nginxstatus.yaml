@@ -85,7 +85,7 @@ jobs:
 
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
-    needs: [download-nginx-status, nginx-status-ansible]
+    needs: [download-artifacts-from-github, nginx-status-ansible]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -110,7 +110,7 @@ jobs:
 
   compare-status:
     runs-on: [self-hosted, self-agent1]
-    needs: [nginx-status-ansible, post-upgradecheck, download-nginx-status]
+    needs: [nginx-status-ansible, post-upgradecheck, download-artifacts-from-github]
     steps:
       - name: download precheck nginx status artifact
         uses: actions/download-artifact@v4
