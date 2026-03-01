@@ -1,39 +1,63 @@
-name: Check Nginx status with Ansible
-run-name: Check Nginx status on target machine
+#complete workflow name which is visible in github "actions" tab
+name: Check Nginx status with Ansible                
+# this is the name of the individual run which is visible in github "actions" tab, 
+#you can use variables here like ${{ github.run_number }} to make it unique for each run
+
+run-name: Check Nginx status on target machine   
+
+#event that triggers the workflow, in this case it's a manual trigger from github UI
 on:
-  workflow_dispatch:
+# allows you to trigger the workflow manually from the GitHub UI                                            
+  workflow_dispatch: 
 
-jobs:
-  nginx-status-ansible:
-    runs-on: [self-hosted, self-agent1]
+# defining the jobs that will run as part of this workflow, we can have multiple jobs 
+#and they can run sequentially or in parallel based on the "needs" keyword
 
+jobs: 
+  nginx-status-ansible:   # first Job name, you can choose any name here
+    runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
+    
+    # this is the list of steps that will be executed as part of this job, each step can run a command, use an action, or perform some other task
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout Code   # check out the code from github repo
+        uses: actions/checkout@v3  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
 
-      - name: Show the Runner Info
+      - name: Show the Runner Info  #to print information about GITHUB self hosted runner, this is useful for debugging and ensuring that the workflow is running on the expected environment
         run: |
-          echo "Runner name: $RUNNER_NAME"
+          echo "Runner name: $RUNNER_NAME"  
           echo "Work dir: $RUNNER_WORKSPACE"
           pwd
           ls -lart
 
-      - name: Run Ansible Playbook
+      # step to run the ansible playbook which is committed in repository
+      - name: Run Precheck Playbook 
         run: |
           ansible-playbook -i inventory.ini check_nginx_status.yaml
+      
+      #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine, this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
       - name: Fetch the content from target to runner
         run: |
            scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/nginx_status.txt ./nginx_status.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/home_files.csv ./home_files.csv 
+
+      #display content from output file
       - name: Display the fetched nginx status
         run: cat ./nginx_status.txt
       
+      #uploading artifacts to github, this allows you to save files generated during the workflow and access them later,
+      # in this case we are uploading the nginx status file so that it can be used in subsequent jobs for comparison
       - name: Upload nginx status as artifact
         uses: actions/upload-artifact@v4
         with:
           name: pre-nginx-status
           path: ./nginx_status.txt
+      #uploading multiple artifacts, in this case we are also uploading the home files list as a CSV file, this is just an example to show that you can upload multiple files as artifacts    
+      - name: Upload home files list as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-files-list
       
-  download-nginx-status:
+  download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
     needs: nginx-status-ansible
     steps:
@@ -41,15 +65,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: pre-nginx-status
-      - name: Display the downloaded nginx status
-        run: |
-          STATUS=$(cat ./nginx_status.txt)
-          echo "Nginx status: $STATUS"
-          if [ "$STATUS" = "active" ]; then
-            echo "Nginx is running"
-          else
-            echo "Nginx is not running"
-          fi
+      
+      - name: Download home dir files list artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: home-files-list
+      # diaply the contenta of nginx statis file
+      # - name: Display the downloaded nginx status
+      #   run: |
+      #     STATUS=$(cat ./nginx_status.txt)
+      #     echo "Nginx status: $STATUS"
+      #     if [ "$STATUS" = "active" ]; then
+      #       echo "Nginx is running"
+
+      #     else
+      #       echo "Nginx is not running"
+      #     fi
+
+
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
     needs: [download-nginx-status, nginx-status-ansible]
