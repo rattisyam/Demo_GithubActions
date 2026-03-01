@@ -12,14 +12,21 @@
       debug:
         var: nginx_status.stdout
         verbosity: 1
+
     - name: Save nginx status to file
       ansible.builtin.copy:
         content: "{{ nginx_status.stdout }}\n"
         dest: /tmp/nginx_status.txt
+
     - name: list files from user home directory
       ansible.builtin.shell: ls -lrt ~/
       register: home_files
       ignore_errors: true
+    - name: print home directory files list
+      debug:
+        var: home_files.stdout
+        verbosity: 1
+
     - name: save this outout as CSV file
       ansible.builtin.copy:
         content: "{{ home_files.stdout }}\n"
