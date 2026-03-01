@@ -17,8 +17,7 @@
         content: "{{ nginx_status.stdout }}\n"
         dest: /tmp/nginx_status.txt
     - name: list files from user home directory
-      ansible.builtin.shell: ls -lrt ~/home/githuba
-      register: home_files
+      ansible.builtin.shell: ls -lrt /home/githuba
       ignore_errors: true
     - name: save this outout as CSV file
       ansible.builtin.copy:
