@@ -137,3 +137,6 @@ ansibleNode1 | SUCCESS => {
 }
 
 
+========================
+1. include anisble linting in pipeline. to do this setup environment , install ansible python and ansible lint.
+2. 

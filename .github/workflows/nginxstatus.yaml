@@ -55,7 +55,7 @@ jobs:
       - name: Upload home files list as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: home-files-list
+          name: pre-home-files-list
           path: ./home_files.csv
       
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
@@ -70,7 +70,7 @@ jobs:
       - name: Download home dir files list artifact
         uses: actions/download-artifact@v4
         with:
-          name: home-files-list
+          name: pre-home-files-list
       # diaply the contenta of nginx statis file
       # - name: Display the downloaded nginx status
       #   run: |
@@ -98,6 +98,7 @@ jobs:
       - name: Fetch the content from target to runner
         run: |
            scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/post_nginx_status.txt ./post_nginx_status.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/post_home_files.csv ./post_home_files.csv
 
 
       - name: Display the fetched nginx status
@@ -108,6 +109,12 @@ jobs:
         with:
           name: post-nginx-status
           path: ./post_nginx_status.txt
+
+      - name: Upload post upgrade home files list as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-home-files-list
+          path: ./post_home_files.csv
 
   compare-status:
     runs-on: [self-hosted, self-agent1]
@@ -121,6 +128,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: post-nginx-status
+      
+      - name: download home files list artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pre-home-files-list
+
+      - name: Download post upgrade home files list artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: post-home-files-list
 
       - name: Compare nginx status before and after upgrade
         run: |
@@ -129,6 +146,14 @@ jobs:
             echo "Nginx status is the same before and after upgrade."
           else
             echo "Nginx status has changed after upgrade."
+          fi
+      - name: compare home list files before and after upgrade
+        run: |
+          echo "Comparing home files list before and after upgrade..."
+          if diff -q ./pre_home_files.csv ./post_home_files.csv > /dev/null; then
+            echo "Home files list is the same before and after upgrade."
+          else
+            echo "Home files list has changed after upgrade."
           fi
           
     

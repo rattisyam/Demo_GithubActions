@@ -16,4 +16,17 @@
       ansible.builtin.copy:
         content: "{{ post_nginx_status.stdout }}\n"
         dest: /tmp/post_nginx_status.txt
+    - name: list files from user home directory after some action
+      ansible.builtin.find:
+        paths: /home/githuba
+        file_type: any
+      register: post_home_files
+      ignore_errors: true
+    - name: save the post home directory files list as CSV file
+      ansible.builtin.copy:
+        content: |
+          {% for file in post_home_files.files %}
+          {{ file.path }}
+          {% endfor %}
+        dest: /tmp/post_home_files.csv
     
