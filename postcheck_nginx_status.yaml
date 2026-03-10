@@ -18,7 +18,7 @@
         dest: /tmp/post_nginx_status.txt
     - name: list files from user home directory after some action
       ansible.builtin.find:
-        paths: /home/githuba
+        paths: /home/githuba/postdir
         file_type: any
       register: post_home_files
       ignore_errors: true
