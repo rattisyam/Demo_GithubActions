@@ -40,7 +40,7 @@ jobs:
       - name: Fetch the content from target to runner
         run: |
            scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_home_files.csv ./home_files_${NODE_NAME}.csv 
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_pre_home_files.csv ./pre_home_files_${NODE_NAME}.csv 
 
       #display content from output file
       - name: Display the fetched nginx status
@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pre-home-files-list
-          path: ./home_files_${NODE_NAME}.csv
+          path: ./pre_home_files_${NODE_NAME}.csv
       
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
