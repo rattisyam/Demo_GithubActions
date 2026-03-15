@@ -162,7 +162,7 @@ jobs:
     strategy:
       matrix:
         NODE_NAME: [ansibleNode1, ansibleNode2]
-          include:  # you can also include specific combinations of variables if needed
+        include:  # you can also include specific combinations of variables if needed
           - NODE_NAME: ansibleNode1
             IP: 172.19.0.5
           - NODE_NAME: ansibleNode2
