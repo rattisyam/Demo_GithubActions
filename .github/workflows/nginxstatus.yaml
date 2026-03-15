@@ -17,17 +17,32 @@ on:
 # defining the jobs that will run as part of this workflow, we can have multiple jobs 
 #and they can run sequentially or in parallel based on the "needs" keyword
 
-jobs: 
+jobs:
+  parsing_target_nodes:  # this is the name of the first job, you can choose any name here
+    runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
+    outputs:  # this allows you to define outputs from this job that can be used in subsequent jobs, in this case we are defining an output called "nodes" which will contain the list of target nodes parsed from the inventory file
+      matrix: ${{ steps.parse_nodes.outputs.matrix }}  # this is referencing the output variable "matrix" defined in the step with id "parse_nodes"
+    steps:
+      - name: Checkout Code   # check out the code from github repo
+        uses: actions/checkout@v4
+      - id: parse_nodes  # this is the id of the step, it allows us to reference the outputs defined in this step in the "outputs" section of the job
+        name: Parse Target Nodes from Inventory  # this step will run a script to parse the target nodes from the inventory file and set it as an output variable
+        run: |
+          python3 parse_inventory.py inventory.ini > matrix.json
+          echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+
   nginx-status-ansible:   # first Job name, you can choose any name here
     runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
     strategy:  # this allows you to run the same job with different configurations, in this case we are running the job for multiple target nodes defined in the "targetnodes" group in our inventory file
-      matrix:
-        NODE_NAME: [ansibleNode1, ansibleNode2]  # this will run the job twice, once with NODE_NAME=ansibleNode1 and once with NODE_NAME=ansibleNode2
-        include:  # you can also include specific combinations of variables if needed
-          - NODE_NAME: ansibleNode1
-            IP: 172.19.0.5
-          - NODE_NAME: ansibleNode2
-            IP: 172.19.0.6
+      matrix: ${{ fromJson(needs.parsing_target_nodes.outputs.matrix) }}  # this is referencing the output variable "matrix" from the previous job "parsing_target_nodes", it will contain the list of target nodes and their details parsed from the inventory file, this will allow us to run this job for each target node defined in the inventory
+        
+      # matrix:
+      #   NODE_NAME: [ansibleNode1, ansibleNode2]  # this will run the job twice, once with NODE_NAME=ansibleNode1 and once with NODE_NAME=ansibleNode2
+      #   include:  # you can also include specific combinations of variables if needed
+      #     - NODE_NAME: ansibleNode1
+      #       IP: 172.19.0.5
+      #     - NODE_NAME: ansibleNode2
+      #       IP: 172.19.0.6
 
     env:  # environment variables that can be used in the steps of this job, we are setting NODE_NAME here based on the matrix configuration
       NODE_NAME: ${{ matrix.NODE_NAME }}
@@ -207,9 +222,4 @@ jobs:
           else
             echo "Home files list has changed after upgrade."
           fi
-          
-    
-     
-
-
           
