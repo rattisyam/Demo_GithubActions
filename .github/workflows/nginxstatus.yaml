@@ -48,7 +48,7 @@ jobs:
       NODE_NAME: ${{ matrix.NODE_NAME }}
       NODE_IP: ${{ matrix.IP }}
     # this is the list of steps that will be executed as part of this job, each step can run a command, use an action, or perform some other task
-
+    needs: parsing_target_nodes  # this specifies that this job should only run after the "parsing_target_nodes" job has completed successfully, this ensures that we have the target nodes information available before we try to run the ansible playbook against them
     steps:
       - name: Checkout Code   # check out the code from github repo
         uses: actions/checkout@v4  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
