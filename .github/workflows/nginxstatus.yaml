@@ -127,21 +127,21 @@ jobs:
       - name: download precheck nginx status artifact
         uses: actions/download-artifact@v4
         with:
-          name: pre-nginx-status
+          name: ${{ env.NODE_NAME }}-pre-nginx-status
       - name: Download post upgrade nginx.txt files 
         uses: actions/download-artifact@v4
         with:
-          name: post-nginx-status
+          name: ${{ env.NODE_NAME }}-post-nginx-status
       
       - name: download home files list artifact
         uses: actions/download-artifact@v4
         with:
-          name: pre-home-files-list
+          name: ${{ env.NODE_NAME }}-pre-home-files-list
 
       - name: Download post upgrade home files list artifact
         uses: actions/download-artifact@v4
         with:
-          name: post-home-files-list
+          name: ${{ env.NODE_NAME }}-post-home-files-list
 
       - name: Compare nginx status before and after upgrade
         run: |
