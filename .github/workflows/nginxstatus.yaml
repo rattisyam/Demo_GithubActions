@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout Code   # check out the code from github repo
-        uses: actions/checkout@v3  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
+        uses: actions/checkout@v4  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
 
       - name: Show the Runner Info  #to print information about GITHUB self hosted runner, this is useful for debugging and ensuring that the workflow is running on the expected environment
         run: |
@@ -93,7 +93,7 @@ jobs:
     needs: [download-artifacts-from-github, nginx-status-ansible]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       #- name: Run Ansible Playbook
       #  run: |
