@@ -10,8 +10,9 @@ on:
 # allows you to trigger the workflow manually from the GitHub UI                                            
   workflow_dispatch: 
 
-env:
-  NODE_NAME: ansibleNode1   # this is an environment variable that can be used throughout the workflow, in this case we are defining the name of the target node where nginx status will be checked, you can change this value based on your inventory and target machine configuration
+
+#env:
+#  NODE_NAME: ansibleNode1   # this is an environment variable that can be used throughout the workflow, in this case we are defining the name of the target node where nginx status will be checked, you can change this value based on your inventory and target machine configuration
 
 # defining the jobs that will run as part of this workflow, we can have multiple jobs 
 #and they can run sequentially or in parallel based on the "needs" keyword
@@ -19,7 +20,18 @@ env:
 jobs: 
   nginx-status-ansible:   # first Job name, you can choose any name here
     runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
-    
+    strategy:  # this allows you to run the same job with different configurations, in this case we are running the job for multiple target nodes defined in the "targetnodes" group in our inventory file
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]  # this will run the job twice, once with NODE_NAME=ansibleNode1 and once with NODE_NAME=ansibleNode2
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+
+    env:  # environment variables that can be used in the steps of this job, we are setting NODE_NAME here based on the matrix configuration
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
     # this is the list of steps that will be executed as part of this job, each step can run a command, use an action, or perform some other task
 
     steps:
@@ -38,11 +50,12 @@ jobs:
         run: |
           ansible-playbook -i inventory.ini check_nginx_status.yaml
       
-      #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine, this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
+      #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine
+      #this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_pre_home_files.csv ./pre_home_files_${NODE_NAME}.csv 
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_pre_home_files.csv ./pre_home_files_${NODE_NAME}.csv 
 
       #display content from output file
       - name: Display the fetched nginx status
@@ -64,6 +77,18 @@ jobs:
       
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
+    strategy:
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
+
     needs: nginx-status-ansible
     steps:
       - name: Download nginx status artifact
@@ -90,6 +115,18 @@ jobs:
 
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
+    strategy:
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
+
     needs: [download-artifacts-from-github, nginx-status-ansible]
     steps:
       - name: Checkout Code
@@ -101,8 +138,8 @@ jobs:
 
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_post_nginx_status.txt ./post_nginx_status_${NODE_NAME}.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_post_home_files.csv ./post_home_files_${NODE_NAME}.csv
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_post_nginx_status.txt ./post_nginx_status_${NODE_NAME}.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_post_home_files.csv ./post_home_files_${NODE_NAME}.csv
 
 
       - name: Display the fetched nginx status
@@ -122,6 +159,17 @@ jobs:
 
   compare-status:
     runs-on: [self-hosted, self-agent1]
+    strategy:
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+          include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }} 
     needs: [nginx-status-ansible, post-upgradecheck, download-artifacts-from-github]
     steps:
       - name: download precheck nginx status artifact

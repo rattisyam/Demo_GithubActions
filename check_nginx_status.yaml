@@ -1,6 +1,6 @@
 ---
 - name: check nginx status on target machine
-  hosts: managednode1
+  hosts: targetnodes
   gather_facts: false
   tasks:
     - name: check nginx service status

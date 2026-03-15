@@ -50,7 +50,7 @@ Permission denied, please try again.
 
 after entering the password it shows "permission denied" which means 
 - Wrong username: You may be trying to connect as githuba, but ansibleNode1 might expect a different user (e.g., ubuntu, ec2-user, root, etc.).
-- Password authentication disabled: The remote server may have PasswordAuthentication no in /etc/ssh/sshd_config.
+- Password authentication disabled: The remote server may have "PasswordAuthentication no" in /etc/ssh/sshd_config.
 - Permissions issue: The user may not have a home directory or .ssh folder with the right permissions.
 - Firewall/SELinux restrictions: Less common, but can block SSH key installation.
 
