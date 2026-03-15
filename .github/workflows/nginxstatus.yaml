@@ -39,12 +39,12 @@ jobs:
       #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine, this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/{{ NODE_NAME }}_nginx_status.txt ./nginx_status_{{ NODE_NAME }}.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/{{ NODE_NAME }}_home_files.csv ./home_files_{{ NODE_NAME }}.csv 
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_home_files.csv ./home_files_${NODE_NAME}.csv 
 
       #display content from output file
       - name: Display the fetched nginx status
-        run: cat ./nginx_status_{{ NODE_NAME }}.txt
+        run: cat ./nginx_status_${NODE_NAME}.txt
       
       #uploading artifacts to github, this allows you to save files generated during the workflow and access them later,
       # in this case we are uploading the nginx status file so that it can be used in subsequent jobs for comparison
@@ -52,13 +52,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pre-nginx-status
-          path: ./nginx_status_{{ NODE_NAME }}.txt
+          path: ./nginx_status_${NODE_NAME}.txt
       #uploading multiple artifacts, in this case we are also uploading the home files list as a CSV file, this is just an example to show that you can upload multiple files as artifacts    
       - name: Upload home files list as artifact
         uses: actions/upload-artifact@v4
         with:
           name: pre-home-files-list
-          path: ./home_files_{{ NODE_NAME }}.csv
+          path: ./home_files_${NODE_NAME}.csv
       
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
@@ -99,24 +99,24 @@ jobs:
 
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/{{ NODE_NAME }}_post_nginx_status.txt ./post_nginx_status_{{ NODE_NAME }}.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/{{ NODE_NAME }}_post_home_files.csv ./post_home_files_{{ NODE_NAME }}.csv
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_post_nginx_status.txt ./post_nginx_status_${NODE_NAME}.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/${NODE_NAME}_post_home_files.csv ./post_home_files_${NODE_NAME}.csv
 
 
       - name: Display the fetched nginx status
-        run: cat ./post_nginx_status_{{ NODE_NAME }}.txt
+        run: cat ./post_nginx_status_${NODE_NAME}.txt
       
       - name: Upload nginx status as artifact
         uses: actions/upload-artifact@v4
         with:
           name: post-nginx-status
-          path: ./post_nginx_status_{{ NODE_NAME }}.txt
+          path: ./post_nginx_status_${NODE_NAME}.txt
 
       - name: Upload post upgrade home files list as artifact
         uses: actions/upload-artifact@v4
         with:
           name: post-home-files-list
-          path: ./post_home_files_{{ NODE_NAME }}.csv
+          path: ./post_home_files_${NODE_NAME}.csv
 
   compare-status:
     runs-on: [self-hosted, self-agent1]
@@ -144,7 +144,7 @@ jobs:
       - name: Compare nginx status before and after upgrade
         run: |
           echo "Comparing nginx status before and after upgrade..."
-          if diff -q ./nginx_status_{{ NODE_NAME }}.txt ./post_nginx_status_{{ NODE_NAME }}.txt > /dev/null; then
+          if diff -q ./nginx_status_${NODE_NAME}.txt ./post_nginx_status_${NODE_NAME}.txt > /dev/null; then
             echo "Nginx status is the same before and after upgrade."
           else
             echo "Nginx status has changed after upgrade."
@@ -152,7 +152,7 @@ jobs:
       - name: compare home list files before and after upgrade
         run: |
           echo "Comparing home files list before and after upgrade..."
-          if diff -q ./pre_home_files_{{ NODE_NAME }}.csv ./post_home_files_{{ NODE_NAME }}.csv > /dev/null; then
+          if diff -q ./pre_home_files_${NODE_NAME}.csv ./post_home_files_${NODE_NAME}.csv > /dev/null; then
             echo "Home files list is the same before and after upgrade."
           else
             echo "Home files list has changed after upgrade."
