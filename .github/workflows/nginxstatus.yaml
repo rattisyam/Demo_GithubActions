@@ -19,7 +19,7 @@ jobs:
     
     # this is the list of steps that will be executed as part of this job, each step can run a command, use an action, or perform some other task
     env:
-      NODE_NAME: managednode1  # this is an environment variable that can be used in the steps, it holds the name of the target machine where nginx status will be checked
+      NODE_NAME: ansibleNode1  # this is an environment variable that can be used in the steps, it holds the name of the target machine where nginx status will be checked
     steps:
       - name: Checkout Code   # check out the code from github repo
         uses: actions/checkout@v3  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
