@@ -52,13 +52,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pre-nginx-status
-          path: ./nginx_status_${NODE_NAME}.txt
+          path: ./nginx_status_${{ env.NODE_NAME }}.txt
       #uploading multiple artifacts, in this case we are also uploading the home files list as a CSV file, this is just an example to show that you can upload multiple files as artifacts    
       - name: Upload home files list as artifact
         uses: actions/upload-artifact@v4
         with:
           name: pre-home-files-list
-          path: ./pre_home_files_${NODE_NAME}.csv
+          path: ./pre_home_files_${{ env.NODE_NAME }}.csv
       
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
@@ -110,13 +110,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: post-nginx-status
-          path: ./post_nginx_status_${NODE_NAME}.txt
+          path: ./post_nginx_status_${{ env.NODE_NAME }}.txt
 
       - name: Upload post upgrade home files list as artifact
         uses: actions/upload-artifact@v4
         with:
           name: post-home-files-list
-          path: ./post_home_files_${NODE_NAME}.csv
+          path: ./post_home_files_${{ env.NODE_NAME }}.csv
 
   compare-status:
     runs-on: [self-hosted, self-agent1]
