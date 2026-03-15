@@ -25,9 +25,7 @@ jobs:
     steps:
       - name: Checkout Code   # check out the code from github repo
         uses: actions/checkout@v4
-        id: checkout  # this is the id of the step, it allows us to reference the outputs defined in this step in the "needs" section of subsequent jobs, in this case we are referencing this step in the "needs" section of the "parsing_target_nodes" job to ensure that the code is checked out before we try to parse the inventory file
       - id: parse_nodes  # this is the id of the step, it allows us to reference the outputs defined in this step in the "outputs" section of the job
-        needs: checkout  # this specifies that this step should run after the "checkout" step is completed successfully
         name: Parse Target Nodes from Inventory  # this step will run a script to parse the target nodes from the inventory file and set it as an output variable
         run: |
           python3 parse_inventory.py inventory.ini > matrix.json
