@@ -66,3 +66,9 @@ drwxrwxr-x 3 githuba githuba 4096 Feb 20 01:05 build
 githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions$ cd .github/
 githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions/.github$ ls -lart
 
+
+
+================
+playboosk to be run from rtunner on host and also artifacts to be saved in ru ner environment rathern than scp
+inputs has to be passed
+security 

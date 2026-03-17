@@ -6,6 +6,6 @@ with open("inventory.ini") as f:
             parts = line.split()
             node = parts[0]
             ip = [p.split("=")[1] for p in parts if p.startswith("ansible_host=")][0]
-            matrix.append({"node": node, "ip": ip})
+            matrix.append({"NODE_NAME": node, "IP": ip})
 print(json.dumps({"include": matrix}))
 

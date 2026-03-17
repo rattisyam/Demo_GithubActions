@@ -30,6 +30,10 @@ jobs:
         run: |
           python3 parse_inventory.py inventory.ini > matrix.json
           echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+      - name: Display parsed target nodes  # this step is just for debugging purposes, it will print the parsed target nodes to the console so that you can verify that the parsing is working correctly
+        run: |
+          echo "Parsed target nodes:"
+          cat matrix.json
 
   nginx-status-ansible:   # first Job name, you can choose any name here
     runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
