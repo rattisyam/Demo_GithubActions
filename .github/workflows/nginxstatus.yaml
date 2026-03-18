@@ -12,7 +12,9 @@ run-name: Check Nginx status on target machine
 on:
   issues:
     types: [opened]  # this will trigger the workflow whenever a new issue is opened in the repository, you can change this to other events like push, pull_request, schedule, etc. based on your requirements
-
+permissions:
+  contents: read  # this allows the workflow to read the contents of the repository, this is necessary for checking out the code and running the ansible playbooks, you can adjust permissions based on your needs, for example if you need to write to the repository or manage issues, you would need to set those permissions accordingly
+  issues: write  # this allows the workflow to create comments on issues, this is useful for updating the issue with the results of the checks, you can adjust this permission based on whether you want the workflow to interact with issues or not
 
 #env:
 #  NODE_NAME: ansibleNode1   # this is an environment variable that can be used throughout the workflow, in this case we are defining the name of the target node where nginx status will be checked, you can change this value based on your inventory and target machine configuration
@@ -298,6 +300,11 @@ jobs:
             [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             
             📦 Artifacts are available in the run’s **Artifacts tab**.
+      - name: close the issue
+        uses: peter-evans/close-issue@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          comment: "Closing the issue as the workflow has completed and results have been posted."
 
 
 
