@@ -22,7 +22,7 @@ on:
 
 jobs:
   github_issue_details:
-    runs_on: [self-hosted, self-agent1]
+    runs-on: [self-hosted, self-agent1]
     steps:
       - name: Print issue info
         run: |
