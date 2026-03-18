@@ -66,16 +66,18 @@ jobs:
           ls -lart
 
       # step to run the ansible playbook which is committed in repository
-      - name: Run Precheck Playbook 
+      - name: Run Precheck Playbook
+        continue-on-error: true
         run: |
-          ansible-playbook -i inventory.ini check_nginx_status.yaml
+          ansible-playbook -i inventory.ini check_nginx_status.yaml --limit ${{ matrix.NODE_NAME }} || true  
+        # this command runs the ansible playbook "check_nginx_status.yaml" against the target node defined in the matrix, the "|| true" at the end ensures that even if the playbook fails for some reason, it will not cause the entire step to fail, this is useful to ensure that we get the results for all nodes even if one of them has an issue
       
       #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine
       #this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_pre_home_files.csv ./pre_home_files_${NODE_NAME}.csv 
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt || true
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_pre_home_files.csv ./pre_home_files_${NODE_NAME}.csv || true
 
       #display content from output file
       - name: Display the fetched nginx status
