@@ -34,6 +34,7 @@ jobs:
    
   parsing_target_nodes:  # this is the name of the first job, you can choose any name here
     runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
+    needs: github_issue_details  # this specifies that this job should only run after the "github_issue_details" job has completed successfully, this ensures that we have the issue details available before we try to parse the target nodes from the inventory file
     outputs:  # this allows you to define outputs from this job that can be used in subsequent jobs, in this case we are defining an output called "nodes" which will contain the list of target nodes parsed from the inventory file
       matrix: ${{ steps.parse_nodes.outputs.matrix }}  # this is referencing the output variable "matrix" defined in the step with id "parse_nodes"
     steps:
@@ -282,4 +283,22 @@ jobs:
           else
             echo "Home files list has changed after upgrade."
           fi
+  update_issue:
+    runs-on: [self-hosted, self-agent1]
+   
+    needs: [compare-status, post-upgradecheck, nginx-status-ansible, download-artifacts-from-github, manual_approval_of_prechecks, Upgrade_of_node]
+    
+    steps:
+      - name: Comment with workflow run and artifacts
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ✅ Workflow completed successfully!
+            [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            📦 Artifacts are available in the run’s **Artifacts tab**.
+
+
+
           
