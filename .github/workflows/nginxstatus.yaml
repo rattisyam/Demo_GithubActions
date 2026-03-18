@@ -21,15 +21,14 @@ on:
 #and they can run sequentially or in parallel based on the "needs" keyword
 
 jobs:
-  if: > 
-    github.event.issue.state == 'open' &&
-    contains(github.event.issue.labels.*.name, 'Task')
-  steps:
-    - name: Print issue info
-      run: |
-        echo "Issue #${{ github.event.issue.number }} is a Task and Open."
-        echo "Title: ${{ github.event.issue.title }}"
-        echo "Body: ${{ github.event.issue.body }}"
+  github_issue_details:
+    runs_on: [self-hosted, self-agent1]
+    steps:
+      - name: Print issue info
+        run: |
+          echo "Issue #${{ github.event.issue.number }} is a Task and Open."
+          echo "Title: ${{ github.event.issue.title }}"
+          echo "Body: ${{ github.event.issue.body }}"
 
 
    
