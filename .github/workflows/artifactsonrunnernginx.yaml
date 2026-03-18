@@ -1,5 +1,5 @@
 #complete workflow name which is visible in github "actions" tab
-name: Check Nginx status with Ansible wiuthout any SCP cooamnds from target remote machine to runner               
+name: Check Nginx status with Ansible                
 # this is the name of the individual run which is visible in github "actions" tab, 
 #you can use variables here like ${{ github.run_number }} to make it unique for each run
 
@@ -10,17 +10,52 @@ on:
 # allows you to trigger the workflow manually from the GitHub UI                                            
   workflow_dispatch: 
 
+
+#env:
+#  NODE_NAME: ansibleNode1   # this is an environment variable that can be used throughout the workflow, in this case we are defining the name of the target node where nginx status will be checked, you can change this value based on your inventory and target machine configuration
+
 # defining the jobs that will run as part of this workflow, we can have multiple jobs 
 #and they can run sequentially or in parallel based on the "needs" keyword
 
-jobs: 
-  nginx-status-ansible:   # first Job name, you can choose any name here
+jobs:
+  parsing_target_nodes:  # this is the name of the first job, you can choose any name here
     runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
-    
-    # this is the list of steps that will be executed as part of this job, each step can run a command, use an action, or perform some other task
+    outputs:  # this allows you to define outputs from this job that can be used in subsequent jobs, in this case we are defining an output called "nodes" which will contain the list of target nodes parsed from the inventory file
+      matrix: ${{ steps.parse_nodes.outputs.matrix }}  # this is referencing the output variable "matrix" defined in the step with id "parse_nodes"
     steps:
       - name: Checkout Code   # check out the code from github repo
-        uses: actions/checkout@v3  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
+        uses: actions/checkout@v4
+      - id: parse_nodes  # this is the id of the step, it allows us to reference the outputs defined in this step in the "outputs" section of the job
+        name: Parse Target Nodes from Inventory  # this step will run a script to parse the target nodes from the inventory file and set it as an output variable
+        run: |
+          python3 parse_inventory.py inventory.ini > matrix.json
+          echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+      - name: Display parsed target nodes  # this step is just for debugging purposes, it will print the parsed target nodes to the console so that you can verify that the parsing is working correctly
+        run: |
+          echo "Parsed target nodes:"
+          cat matrix.json
+
+  nginx-status-ansible:   # first Job name, you can choose any name here
+    runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
+    strategy:  # this allows you to run the same job with different configurations, in this case we are running the job for multiple target nodes defined in the "targetnodes" group in our inventory file
+      matrix: ${{ fromJson(needs.parsing_target_nodes.outputs.matrix) }}  # this is referencing the output variable "matrix" from the previous job "parsing_target_nodes", it will contain the list of target nodes and their details parsed from the inventory file, this will allow us to run this job for each target node defined in the inventory
+        
+      # matrix:
+      #   NODE_NAME: [ansibleNode1, ansibleNode2]  # this will run the job twice, once with NODE_NAME=ansibleNode1 and once with NODE_NAME=ansibleNode2
+      #   include:  # you can also include specific combinations of variables if needed
+      #     - NODE_NAME: ansibleNode1
+      #       IP: 172.19.0.5
+      #     - NODE_NAME: ansibleNode2
+      #       IP: 172.19.0.6
+
+    env:  # environment variables that can be used in the steps of this job, we are setting NODE_NAME here based on the matrix configuration
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
+    # this is the list of steps that will be executed as part of this job, each step can run a command, use an action, or perform some other task
+    needs: parsing_target_nodes  # this specifies that this job should only run after the "parsing_target_nodes" job has completed successfully, this ensures that we have the target nodes information available before we try to run the ansible playbook against them
+    steps:
+      - name: Checkout Code   # check out the code from github repo
+        uses: actions/checkout@v4  # this is a predefined action that checks out your repository so that the workflow can access the code and files in it
 
       - name: Show the Runner Info  #to print information about GITHUB self hosted runner, this is useful for debugging and ensuring that the workflow is running on the expected environment
         run: |
@@ -34,43 +69,69 @@ jobs:
         run: |
           ansible-playbook -i inventory.ini check_nginx_status.yaml
       
-      #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine, this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
+      #fetch the content from the output file which is created by ansible playbook on target machine to the runner machine
+      #this is done using scp command, you need to ensure that the runner has access to the target machine and the necessary SSH keys are set up for passwordless authentication
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/nginx_status.txt ./nginx_status.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/home_files.csv ./home_files.csv 
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_nginx_status.txt ./nginx_status_${NODE_NAME}.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_pre_home_files.csv ./pre_home_files_${NODE_NAME}.csv 
 
       #display content from output file
       - name: Display the fetched nginx status
-        run: cat ./nginx_status.txt
+        run: cat ./nginx_status_${NODE_NAME}.txt
       
       #uploading artifacts to github, this allows you to save files generated during the workflow and access them later,
       # in this case we are uploading the nginx status file so that it can be used in subsequent jobs for comparison
       - name: Upload nginx status as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pre-nginx-status
-          path: ./nginx_status.txt
+          name: ${{ env.NODE_NAME }}-pre-nginx-status
+          path: ./nginx_status_${{ env.NODE_NAME }}.txt
       #uploading multiple artifacts, in this case we are also uploading the home files list as a CSV file, this is just an example to show that you can upload multiple files as artifacts    
       - name: Upload home files list as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pre-home-files-list
-          path: ./home_files.csv
+          name: ${{ env.NODE_NAME }}-pre-home-files-list
+          path: ./pre_home_files_${{ env.NODE_NAME }}.csv
+
+  manual_approval_stage:
+    runs-on: [self-hosted, self-agent1]
+    needs: nginx-status-ansible
+    steps:
+      - name: Manual Approval  # this is a manual approval step, it will pause the workflow and wait for a user to approve it from the GitHub UI before it continues to the next steps, this is useful for scenarios where you want to review the results of the previous steps before proceeding with actions that might have an impact,
+                                  # such as running upgrade scripts or making changes to production systems
+        uses: peter-evans/slash-command-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          reaction-token: ${{ secrets.GITHUB_TOKEN }}
+          commands: |
+            /approve
       
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
+    strategy:
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
+
     needs: nginx-status-ansible
     steps:
       - name: Download nginx status artifact
         uses: actions/download-artifact@v4
         with:
-          name: pre-nginx-status
+          name: ${{ env.NODE_NAME }}-pre-nginx-status
       
       - name: Download home dir files list artifact
         uses: actions/download-artifact@v4
         with:
-          name: pre-home-files-list
+          name: ${{ env.NODE_NAME }}-pre-home-files-list
       # diaply the contenta of nginx statis file
       # - name: Display the downloaded nginx status
       #   run: |
@@ -86,10 +147,22 @@ jobs:
 
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
+    strategy:
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
+
     needs: [download-artifacts-from-github, nginx-status-ansible]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       #- name: Run Ansible Playbook
       #  run: |
@@ -97,52 +170,63 @@ jobs:
 
       - name: Fetch the content from target to runner
         run: |
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/post_nginx_status.txt ./post_nginx_status.txt
-           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@172.19.0.5:/tmp/post_home_files.csv ./post_home_files.csv
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_post_nginx_status.txt ./post_nginx_status_${NODE_NAME}.txt
+           scp -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP}:/tmp/${NODE_NAME}_post_home_files.csv ./post_home_files_${NODE_NAME}.csv
 
 
       - name: Display the fetched nginx status
-        run: cat ./post_nginx_status.txt
+        run: cat ./post_nginx_status_${NODE_NAME}.txt
       
       - name: Upload nginx status as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: post-nginx-status
-          path: ./post_nginx_status.txt
+          name: ${{ env.NODE_NAME }}-post-nginx-status
+          path: ./post_nginx_status_${{ env.NODE_NAME }}.txt
 
       - name: Upload post upgrade home files list as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: post-home-files-list
-          path: ./post_home_files.csv
+          name: ${{ env.NODE_NAME }}-post-home-files-list
+          path: ./post_home_files_${{ env.NODE_NAME }}.csv
 
   compare-status:
     runs-on: [self-hosted, self-agent1]
+    strategy:
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }} 
     needs: [nginx-status-ansible, post-upgradecheck, download-artifacts-from-github]
     steps:
       - name: download precheck nginx status artifact
         uses: actions/download-artifact@v4
         with:
-          name: pre-nginx-status
+          name: ${{ env.NODE_NAME }}-pre-nginx-status
       - name: Download post upgrade nginx.txt files 
         uses: actions/download-artifact@v4
         with:
-          name: post-nginx-status
+          name: ${{ env.NODE_NAME }}-post-nginx-status
       
       - name: download home files list artifact
         uses: actions/download-artifact@v4
         with:
-          name: pre-home-files-list
+          name: ${{ env.NODE_NAME }}-pre-home-files-list
 
       - name: Download post upgrade home files list artifact
         uses: actions/download-artifact@v4
         with:
-          name: post-home-files-list
+          name: ${{ env.NODE_NAME }}-post-home-files-list
 
       - name: Compare nginx status before and after upgrade
         run: |
           echo "Comparing nginx status before and after upgrade..."
-          if diff -q ./nginx_status.txt ./post_nginx_status.txt > /dev/null; then
+          if diff -q ./nginx_status_${NODE_NAME}.txt ./post_nginx_status_${NODE_NAME}.txt > /dev/null; then
             echo "Nginx status is the same before and after upgrade."
           else
             echo "Nginx status has changed after upgrade."
@@ -150,14 +234,9 @@ jobs:
       - name: compare home list files before and after upgrade
         run: |
           echo "Comparing home files list before and after upgrade..."
-          if diff -q ./pre_home_files.csv ./post_home_files.csv > /dev/null; then
+          if diff -q ./pre_home_files_${NODE_NAME}.csv ./post_home_files_${NODE_NAME}.csv > /dev/null; then
             echo "Home files list is the same before and after upgrade."
           else
             echo "Home files list has changed after upgrade."
           fi
-          
-    
-     
-
-
           

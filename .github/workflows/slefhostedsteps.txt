@@ -72,3 +72,9 @@ githuba@GHAAGENT1:~/Demo_GithubActions/Demo_GithubActions/.github$ ls -lart
 playboosk to be run from rtunner on host and also artifacts to be saved in ru ner environment rathern than scp
 inputs has to be passed
 security 
+'
+
+===========
+GitHub Actions doesn’t have a native “pause and wait for approval” step inside a job, but you can achieve this using environment protection rules.
+
+==================

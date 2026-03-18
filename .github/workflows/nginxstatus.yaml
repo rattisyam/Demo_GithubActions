@@ -38,8 +38,9 @@ jobs:
   nginx-status-ansible:   # first Job name, you can choose any name here
     runs-on: [self-hosted, self-agent1]  # this specifies that the job should run on a self-hosted runner with the label "self-agent1"
     strategy:  # this allows you to run the same job with different configurations, in this case we are running the job for multiple target nodes defined in the "targetnodes" group in our inventory file
+      fail-fast: false  # this ensures that if one of the matrix combinations fails, it will not stop the entire job, it will continue to run for the other combinations, this is useful when you want to ensure that you get results for all target nodes even if one of them has an issue
       matrix: ${{ fromJson(needs.parsing_target_nodes.outputs.matrix) }}  # this is referencing the output variable "matrix" from the previous job "parsing_target_nodes", it will contain the list of target nodes and their details parsed from the inventory file, this will allow us to run this job for each target node defined in the inventory
-        
+    continue-on-error: true # this allows the job to continue running for all matrix combinations even if one of them fails, this is useful in scenarios where you want to check the status on multiple nodes and you want to get the results for all nodes even if one of them has an issue
       # matrix:
       #   NODE_NAME: [ansibleNode1, ansibleNode2]  # this will run the job twice, once with NODE_NAME=ansibleNode1 and once with NODE_NAME=ansibleNode2
       #   include:  # you can also include specific combinations of variables if needed
@@ -97,6 +98,7 @@ jobs:
   download-artifacts-from-github:  #second job to download the nginx status artifact that was uploaded in the first job, this job will run after the first job is completed successfully
     runs-on: [self-hosted, self-agent1]
     strategy:
+      fail-fast: false  # this ensures that if one of the matrix combinations fails, it will not stop the entire job, it will continue to run for the other combinations, this is useful when you want to ensure that you get results for all target nodes even if one of them has an issue
       matrix:
         NODE_NAME: [ansibleNode1, ansibleNode2]
         include:  # you can also include specific combinations of variables if needed
@@ -104,6 +106,7 @@ jobs:
             IP: 172.19.0.5
           - NODE_NAME: ansibleNode2
             IP: 172.19.0.6
+    continue-on-error: true 
     env:
       NODE_NAME: ${{ matrix.NODE_NAME }}
       NODE_IP: ${{ matrix.IP }}
@@ -135,6 +138,7 @@ jobs:
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
     strategy:
+      fail-fast: false  # this allows the job to continue running for all matrix combinations even if one of them fails, this is useful in scenarios where you want to check the status on multiple nodes and you want to get the results for all nodes even if one of them has an issue
       matrix:
         NODE_NAME: [ansibleNode1, ansibleNode2]
         include:  # you can also include specific combinations of variables if needed
@@ -142,6 +146,7 @@ jobs:
             IP: 172.19.0.5
           - NODE_NAME: ansibleNode2
             IP: 172.19.0.6
+    continue-on-error: true
     env:
       NODE_NAME: ${{ matrix.NODE_NAME }}
       NODE_IP: ${{ matrix.IP }}
@@ -179,6 +184,7 @@ jobs:
   compare-status:
     runs-on: [self-hosted, self-agent1]
     strategy:
+      fail-fast: false
       matrix:
         NODE_NAME: [ansibleNode1, ansibleNode2]
         include:  # you can also include specific combinations of variables if needed
@@ -186,6 +192,7 @@ jobs:
             IP: 172.19.0.5
           - NODE_NAME: ansibleNode2
             IP: 172.19.0.6
+    continue-on-error: true
     env:
       NODE_NAME: ${{ matrix.NODE_NAME }}
       NODE_IP: ${{ matrix.IP }} 
