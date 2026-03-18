@@ -184,7 +184,7 @@ jobs:
       NODE_NAME: ${{ matrix.NODE_NAME }}
       NODE_IP: ${{ matrix.IP }}
 
-    needs: [download-artifacts-from-github, nginx-status-ansible]
+    needs: [download-artifacts-from-github, nginx-status-ansible, manual_approval_of_prechecks, Upgrade_of_node]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -229,7 +229,7 @@ jobs:
     env:
       NODE_NAME: ${{ matrix.NODE_NAME }}
       NODE_IP: ${{ matrix.IP }} 
-    needs: [nginx-status-ansible, post-upgradecheck, download-artifacts-from-github]
+    needs: [nginx-status-ansible, post-upgradecheck, download-artifacts-from-github, manual_approval_of_prechecks, Upgrade_of_node]
     steps:
       - name: download precheck nginx status artifact
         uses: actions/download-artifact@v4
