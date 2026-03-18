@@ -133,7 +133,40 @@ jobs:
       #     else
       #       echo "Nginx is not running"
       #     fi
+  manual_approval_of_prechecks: # this is step to perform manual review of the pre-checks before proceeding with the upgrade, this is useful in scenarios where you want to ensure that all pre-checks are successful and reviewed before moving forward with the upgrade process
+    runs-on: [self-hosted, self-agent1]
+    needs: [download-artifacts-from-github, nginx-status-ansible]
+    environment:
+      name: prod_poc
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+    steps:
+      - name: Waiting for manual approval  # this step will pause the workflow and wait for a manual approval from someone with access to the repository, this is useful to ensure that the pre-check results are reviewed before proceeding with the upgrade
+        run: echo "Reviewer must approve from Github UI to proceed with the upgrade process"
+
+  Upgrade_of_node: # this step to create one file on home folder of user on target machine to simulate the upgrade process, in real scenario this step will contain the actual upgrade commands or playbooks that will perform the upgrade on the target machine
+    runs-on: [self-hosted, self-agent1]
+    strategy:
+      fail-fast: false  # this allows the job to continue running for all matrix combinations even if one of them fails, this is useful in scenarios where you want to check the status on multiple nodes and you want to get the results for all nodes even if one of them has an issue
+      matrix:
+        NODE_NAME: [ansibleNode1, ansibleNode2]
+        include:  # you can also include specific combinations of variables if needed
+          - NODE_NAME: ansibleNode1
+            IP: 172.19.0.5
+          - NODE_NAME: ansibleNode2
+            IP: 172.19.0.6
+    continue-on-error: true
+    env:
+      NODE_NAME: ${{ matrix.NODE_NAME }}
+      NODE_IP: ${{ matrix.IP }}
+    needs: [manual_approval_of_prechecks, download-artifacts-from-github, nginx-status-ansible]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Simulate Upgrade Process  # this step is just simulating the upgrade process by creating a file on the target machine, in real scenario this will be replaced with actual upgrade commands or playbooks
+        run: |
+          ssh -o StrictHostKeyChecking=no -i /home/githuba/.ssh/id_rsa githuba@${NODE_IP} "echo 'This file simulates the upgrade process' > /home/githuba/upgrade_file.txt"
 
   post-upgradecheck:
     runs-on: [self-hosted, self-agent1]
